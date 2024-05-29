@@ -31,7 +31,7 @@ func main() {
 	// Создание контроллера
 	postController := controllers.NewPostController(postService)
 
-	// Настройка маршрутизации
+	// Настройка маршрутизациИ
 	router := gin.Default()
 
 	router.POST("/posts", postController.CreatePost)
