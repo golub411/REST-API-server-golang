@@ -1,6 +1,6 @@
 # ⭐REST-API-server-golang
 
-##🔥I made this api like a foundation for my and yours projects. This api use my own library CRUD-sql, gin and packege http/net for servers. Api corresponds meets all architectural requirements. 
+🔥I made this api like a foundation for my and yours projects. This api use my own library CRUD-sql, gin and packege http/net for servers. Api corresponds meets all architectural requirements. 
 
 ```
   func main() {
