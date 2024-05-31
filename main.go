@@ -25,11 +25,14 @@ func main() {
 	defer db.Close()
 
 	postService := services.DatabaseInit(db)
+	userService := services.DatabaseInitU(db)
 
 	postService.CreatePostsTable()
+	userService.CreateUsersTable()
 
 	// Создание контроллера
 	postController := controllers.NewPostController(postService)
+	userController := controllers.NewUserController(userService)
 
 	// Настройка маршрутизациИ
 	router := gin.Default()
@@ -39,6 +42,15 @@ func main() {
 	router.GET("/posts/:id", postController.GetPostByID)
 	router.PUT("/posts/:id", postController.UpdatePost)
 	router.DELETE("/posts/:id", postController.DeletePost)
+
+	// Маршруты для регистрации и логина
+	router.POST("/register", userController.Register)
+	router.POST("/login", userController.Login)
+
+	// Маршруты для пользователей с аутентификацией
+	auth := router.Group("/")
+	auth.Use(controllers.AuthMiddleware())
+	auth.DELETE("/users/:id", userController.DeleteUser)
 
 	router.Run(":8080")
 
