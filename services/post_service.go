@@ -4,6 +4,7 @@ import (
 	"api-go/crudsql"
 	"api-go/models"
 	"fmt"
+	"strconv"
 )
 
 type PostService struct {
@@ -15,20 +16,29 @@ func DatabaseInit(db *crudsql.Database) *PostService {
 }
 
 func (p *PostService) CreatePostsTable() error {
-	err := p.db.CreateTable("posts", []string{"post_id INTEGER PRIMARY KEY AUTOINCREMENT", "body TEXT"})
+	err := p.db.CreateTable("posts", []string{"post_id INTEGER PRIMARY KEY AUTOINCREMENT", "body TEXT", "author_id INTEGER"})
 	return err
 }
 
-func (p *PostService) CreatePost(body string) (*models.Post, error) {
-	post := &models.Post{Body: body}
-	// Убедитесь, что post.Body имеет правильный тип, который должен быть помещен в срез интерфейсов
-	err := p.db.InsertValue("posts", []string{"body"}, []interface{}{post.Body})
-	return post, err
+func (p *PostService) CreatePost(body string, author_id string) (*models.Post, error) {
+	author_id_num, err := strconv.Atoi(author_id)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось преобразовать author_id в число: %w", err)
+	}
+
+	post := &models.Post{Body: body, Author_id: author_id_num}
+
+	err = p.db.InsertValue("posts", []string{"body", "author_id"}, []interface{}{post.Body, post.Author_id})
+	if err != nil {
+		return nil, fmt.Errorf("не удалось вставить пост в базу данных: %w", err)
+	}
+
+	return post, nil
 }
 
 func (p *PostService) GetAllPosts() ([]map[string]interface{}, error) {
 	// Assuming SelectValue returns ([]models.Post, error)
-	posts, err := p.db.SelectValue("posts", []string{"post_id", "body"})
+	posts, err := p.db.SelectValue("posts", []string{"post_id", "body", "author_id"})
 	if err != nil {
 		// Handle the error appropriately, e.g., return it or log it
 		return nil, err

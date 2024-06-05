@@ -21,7 +21,8 @@ func NewPostController(service *services.PostService) *PostController {
 
 func (c *PostController) CreatePost(ctx *gin.Context) {
 	var req struct {
-		Body string `json:"body"`
+		Body      string `json:"body"`
+		Author_id string `json:"author_id"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -29,7 +30,7 @@ func (c *PostController) CreatePost(ctx *gin.Context) {
 		return
 	}
 
-	post, err := c.service.CreatePost(req.Body)
+	post, err := c.service.CreatePost(req.Body, req.Author_id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
