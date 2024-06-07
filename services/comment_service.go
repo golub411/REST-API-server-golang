@@ -55,3 +55,13 @@ func (p *CommentService) GetCommentsByPostId(postID string) ([]map[string]interf
 	}
 	return comments, nil
 }
+
+func (p *CommentService) DeleteCommentById(id string) error {
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		return fmt.Errorf("неверный идентификатор комментария: %w", err)
+	}
+
+	err = p.db.DeleteValue("comments", map[string]interface{}{"id": idNum})
+	return err
+}

@@ -55,3 +55,22 @@ func (c *CommentController) GetCommentsByPostId(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, comments)
 }
+
+func (c *CommentController) DeleteCommentById(ctx *gin.Context) {
+	var req struct {
+		ID string `json:"id"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := c.service.DeleteCommentById(req.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Comment deleted successfully"})
+}

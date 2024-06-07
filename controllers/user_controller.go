@@ -27,8 +27,24 @@ func (ctrl *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// Получение информации из токена
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userClaims := claims.(*utils.Claims)
+	userID := userClaims.UserID // Предполагаем, что в claims есть UserID
+	userRole := userClaims.Role // Предполагаем, что в claims есть Role
+
+	// Проверка прав доступа
+	if userRole != "admin" && uint(id) != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+		return
+	}
+
 	err = ctrl.Service.DeleteUser(int(id))
-	fmt.Println(err)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
@@ -50,6 +66,7 @@ func (ctrl *UserController) Register(c *gin.Context) {
 	err := ctrl.Service.Registration(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		fmt.Println(err)
 		return
 	}
 
@@ -66,13 +83,14 @@ func (ctrl *UserController) Login(c *gin.Context) {
 		return
 	}
 
-	isAuthenticated, err := ctrl.Service.Login(req.Username, req.Password)
+	isAuthenticated, user, err := ctrl.Service.Login(req.Username, req.Password)
 	if err != nil || !isAuthenticated {
+		fmt.Println(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	token, err := utils.GenerateJWT(req.Username)
+	token, err := utils.GenerateJWT(uint(user.ID), user.Name, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -98,7 +116,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("username", claims.Username)
+		c.Set("claims", claims)
 		c.Next()
 	}
 }
