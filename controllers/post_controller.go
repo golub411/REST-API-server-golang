@@ -6,6 +6,8 @@ import (
 
 	"api-go/services"
 
+	"api-go/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -106,9 +108,34 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 //
 
 func (c *PostController) DeletePost(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi("123") //ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	claims, exists := ctx.Get("claims")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userClaims := claims.(*utils.Claims)
+	userID := userClaims.UserID // Предполагаем, что в claims есть UserID
+	userRole := userClaims.Role // Предполагаем, что в claims есть Role
+
+	// Получения id автора поста
+	post, err := c.service.GetById(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	postAuthorID := post[0]["author_id"]
+
+	// Проверка прав доступа
+	if userRole != "admin" && postAuthorID != userID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
 		return
 	}
 

@@ -47,7 +47,7 @@ func (p *PostService) GetAllPosts() ([]map[string]interface{}, error) {
 }
 
 func (p *PostService) GetById(id int) ([]map[string]interface{}, error) {
-	return p.db.SelectValueWhere("posts", []string{"post_id", "body"}, fmt.Sprintf("post_id = %d", id))
+	return p.db.SelectValueWhere("posts", []string{"post_id", "body", "author_id"}, fmt.Sprintf("post_id = %d", id))
 }
 
 func (p *PostService) UpdatePost(id int, body string) (map[string]interface{}, error) {
@@ -63,6 +63,6 @@ func (p *PostService) UpdatePost(id int, body string) (map[string]interface{}, e
 }
 
 func (p *PostService) DeletePost(id int) error {
-	err := p.db.DeleteValue("posts", map[string]interface{}{"id": id})
+	err := p.db.DeleteValue("posts", map[string]interface{}{"post_id": id})
 	return err
 }
