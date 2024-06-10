@@ -42,8 +42,6 @@ func main() {
 
 	router.GET("/posts", postController.GetAllPosts)
 	router.GET("/posts/:id", postController.GetPostByID)
-	router.PUT("/posts/:id", postController.UpdatePost)
-	router.DELETE("/posts/:id", postController.DeletePost)
 	router.GET("/comments", commentController.GetCommentsByPostId)
 
 	// Маршруты для регистрации и логина
@@ -56,6 +54,8 @@ func main() {
 	auth.DELETE("/users/:id", userController.DeleteUser)
 	auth.POST("/posts", postController.CreatePost)
 	auth.POST("/comments", commentController.CreateComment)
+	auth.PUT("/posts/:id", postController.UpdatePost)
+	auth.DELETE("/posts/:id", postController.DeletePost)
 
 	router.Run(":8080")
 

@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"api-go/services"
@@ -23,8 +25,7 @@ func NewPostController(service *services.PostService) *PostController {
 
 func (c *PostController) CreatePost(ctx *gin.Context) {
 	var req struct {
-		Body      string `json:"body"`
-		Author_id string `json:"author_id"`
+		Body string `json:"body"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -32,7 +33,18 @@ func (c *PostController) CreatePost(ctx *gin.Context) {
 		return
 	}
 
-	post, err := c.service.CreatePost(req.Body, req.Author_id)
+	claims, exists := ctx.Get("claims")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userClaims := claims.(*utils.Claims)
+	userID := userClaims.UserID // Предполагаем, что в claims есть UserID
+
+	numberID := strconv.FormatUint(uint64(userID), 10)
+
+	post, err := c.service.CreatePost(req.Body, numberID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -92,6 +104,31 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 		return
 	}
 
+	claims, exists := ctx.Get("claims")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userClaims := claims.(*utils.Claims)
+	userID := userClaims.UserID // Предполагаем, что в claims есть UserID
+	userRole := userClaims.Role // Предполагаем, что в claims есть Role
+
+	// Получения id автора поста
+	posT, err := c.service.GetById(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	postAuthorID := posT[0]["author_id"]
+
+	// Проверка прав доступа
+	if userRole != "admin" && postAuthorID != int64(userID) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+		return
+	}
+
 	post, err := c.service.UpdatePost(id, req.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -108,7 +145,8 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 //
 
 func (c *PostController) DeletePost(ctx *gin.Context) {
-	id, err := strconv.Atoi("123") //ctx.Param("id"))
+	idStr := ctx.Param("id") // Это уже строка
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
 		return
@@ -133,8 +171,11 @@ func (c *PostController) DeletePost(ctx *gin.Context) {
 
 	postAuthorID := post[0]["author_id"]
 
+	fmt.Println(reflect.TypeOf(postAuthorID))
+	fmt.Println(reflect.TypeOf(userID))
+
 	// Проверка прав доступа
-	if userRole != "admin" && postAuthorID != userID {
+	if userRole != "admin" && postAuthorID != int64(userID) {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
 		return
 	}

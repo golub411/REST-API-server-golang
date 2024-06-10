@@ -52,8 +52,8 @@ func (p *PostService) GetById(id int) ([]map[string]interface{}, error) {
 
 func (p *PostService) UpdatePost(id int, body string) (map[string]interface{}, error) {
 	set := map[string]interface{}{"body": body}
-	where := map[string]interface{}{"id": id}
-	err := p.db.UpdateValue("your_table", set, where)
+	where := map[string]interface{}{"post_id": id}
+	err := p.db.UpdateValue("posts", set, where)
 	if err != nil {
 		// Handle the error
 		return nil, err
